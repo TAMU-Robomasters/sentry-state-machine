@@ -9,10 +9,13 @@ from geometry_msgs.msg import PoseStamped
 
 from std_msgs.msg import Int32
 
+from action_msgs.msg import GoalStatusArray
+
 
 # x pos, y pos, z pos, rot_x, rot_y, rot_z, rot_w
-CENTER:tuple[float,float,float,float,float,float,float] = ( 3.42, 0.256, 0.0, 0.0, 0.0, 0.0, 1.0)
-HOME:  tuple[float,float,float,float,float,float,float] = ( 0.517, 0.0,  0.0, 0.0, 0.0, 0.0, 1.0)
+ATTACK_1:tuple[float,float,float,float,float,float,float] = ( 3.42, 0.256, 0.0, 0.0, 0.0, 0.0, 1.0)
+ATTACK_2:tuple[float,float,float,float,float,float,float] = ( 2.42, 0.256, 0.0, 0.0, 0.0, 0.0, 1.0)
+SPAWN:  tuple[float,float,float,float,float,float,float] = ( 0.517, 0.0,  0.0, 0.0, 0.0, 0.0, 1.0)
 
 class State:
     # Pose is x, y, z, rot_x, rot_y, rot_z, rot_w
@@ -29,14 +32,16 @@ class State:
         return self.name
 
 
-CENTER_STATE = State("Center State", hasPose=True, pose=CENTER)
-HOME_STATE = State("Home State", hasPose=True, pose=HOME)
+ATTACK_1_STATE = State("Center State", hasPose=True, pose=ATTACK_1)
+ATTACK_2_STATE = State("Center State", hasPose=True, pose=ATTACK_2)
+SPAWN_STATE = State("SPAWN State", hasPose=True, pose=SPAWN)
 
 
 class GoalNode(Node):
     def __init__(self,
-                 lowHealthState: State = HOME_STATE,
-                 highHealthState:State = CENTER_STATE,
+                 lowHealthState: State = SPAWN_STATE,
+                 highHealthState1:State = ATTACK_1_STATE,
+                 highHealthState2:State = ATTACK_2_STATE,
                  lowHealthTrigger: int = 25, 
                  highHealthTrigger:int = 100
                  ):
@@ -51,12 +56,14 @@ class GoalNode(Node):
 
         # Health and state stuff
         self.health = 50
+        self.cur_state = 1
         self.lowHealthTrigger: int = lowHealthTrigger
         self.highHealthTrigger:int = highHealthTrigger
         self.lowHealthState: State = lowHealthState
-        self.highHealthState:State = highHealthState
+        self.highHealthState1:State = highHealthState1
+        self.highHealthState2:State = highHealthState2
 
-        self.state: State = highHealthState
+        self.state: State = highHealthState1
 
         self.health_subscription = self.create_subscription(
             Int32,
@@ -64,6 +71,8 @@ class GoalNode(Node):
             self.health_callback,
             10
         )
+
+        self.create_subscription(GoalStatusArray, '/navigate_to_pose/_action/status', self.on_status, 10)
 
         # Doing stuff
         self.get_logger().info('Waiting for Nav2 action server...')
@@ -73,13 +82,22 @@ class GoalNode(Node):
         self.send_goal()
 
 
+    def on_status(self, msg):
+        if msg.status_list and msg.status_list[-1].status == 4:
+            self.updateState
+
     def updateState(self):
-        if self.state == self.lowHealthState and self.health >= self.highHealthTrigger:
-            self.state = self.highHealthState
+        if self.health >= self.highHealthTrigger:
+            if self.cur_state == 1:
+                self.state = self.highHealthState2
+                self.cur_state = 2
+            else: 
+                self.state = self.highHealthState1
+                self.cut_state = 1
             self.get_logger().info(f"Changing state to {self.state}")
             self.send_goal()
         
-        elif self.state == self.highHealthState and self.health <= self.lowHealthTrigger:
+        elif (self.state == self.highHealthState1 or self.state == self.highHealthState2) and self.health <= self.lowHealthTrigger:
             self.state = self.lowHealthState
             self.get_logger().info(f"Changing state to {self.state}")
             self.send_goal()
