@@ -13,9 +13,9 @@ from action_msgs.msg import GoalStatusArray
 
 
 # x pos, y pos, z pos, rot_x, rot_y, rot_z, rot_w
-ATTACK_1:tuple[float,float,float,float,float,float,float] = ( 3.42, 0.256, 0.0, 0.0, 0.0, 0.0, 1.0)
-ATTACK_2:tuple[float,float,float,float,float,float,float] = ( 2.42, 0.256, 0.0, 0.0, 0.0, 0.0, 1.0)
-SPAWN:  tuple[float,float,float,float,float,float,float] = ( 0.517, 0.0,  0.0, 0.0, 0.0, 0.0, 1.0)
+ATTACK_1:tuple[float,float,float,float,float,float,float] = ( 2.42, -1.07, 0.0, 0.0, 0.0, 0.0, 1.0)
+ATTACK_2:tuple[float,float,float,float,float,float,float] = ( 4.44, 2.00, 0.0, 0.0, 0.0, 0.0, 1.0)
+SPAWN:  tuple[float,float,float,float,float,float,float] = ( 3.87, -1.41,  0.0, 0.0, 0.0, 0.0, 1.0)
 
 class State:
     # Pose is x, y, z, rot_x, rot_y, rot_z, rot_w
@@ -32,9 +32,9 @@ class State:
         return self.name
 
 
-ATTACK_1_STATE = State("Center State", hasPose=True, pose=ATTACK_1)
-ATTACK_2_STATE = State("Center State", hasPose=True, pose=ATTACK_2)
-SPAWN_STATE = State("SPAWN State", hasPose=True, pose=SPAWN)
+ATTACK_1_STATE = State("Attack State 1", hasPose=True, pose=ATTACK_1)
+ATTACK_2_STATE = State("Attack State 2", hasPose=True, pose=ATTACK_2)
+SPAWN_STATE = State("Spawn State", hasPose=True, pose=SPAWN)
 
 
 class GoalNode(Node):
@@ -83,7 +83,9 @@ class GoalNode(Node):
 
 
     def on_status(self, msg):
+        self.get_logger().info("GoalStatusArray Updated")
         if msg.status_list and msg.status_list[-1].status == 4:
+            self.get_logger().info("point reached")
             self.updateState
 
     def updateState(self):
@@ -106,9 +108,7 @@ class GoalNode(Node):
 
     def health_callback(self, msg):
         self.health = msg.data
-        self.get_logger().info(
-            f'Received health: {self.health}'
-        )
+        self.get_logger().info(f'Received health: {self.health}')
         # self.get_logger().info(f"Current state {self.state}  self.health={self.health} (type {type(self.health)})")
         # self.get_logger().info(f"self.lowhealthstate={self.lowHealthState} self.lowhealthtrigger={self.lowHealthTrigger}")
         # self.get_logger().info(f"self.highhealthstate={self.highHealthState} self.highealthtrigger={self.highHealthTrigger}")
