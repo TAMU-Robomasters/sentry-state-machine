@@ -13,9 +13,9 @@ from action_msgs.msg import GoalStatusArray
 
 
 # x pos, y pos, z pos, rot_x, rot_y, rot_z, rot_w
-ATTACK_1:tuple[float,float,float,float,float,float,float] = ( 2.42, -1.07, 0.0, 0.0, 0.0, 0.0, 1.0)
-ATTACK_2:tuple[float,float,float,float,float,float,float] = ( 4.44, 2.00, 0.0, 0.0, 0.0, 0.0, 1.0)
-SPAWN:  tuple[float,float,float,float,float,float,float] = ( 3.87, -1.41,  0.0, 0.0, 0.0, 0.0, 1.0)
+ATTACK_2:tuple[float,float,float,float,float,float,float] = ( -3.55, 3.38, 0.0, 0.0, 0.0, 0.0, 1.0)
+ATTACK_1:tuple[float,float,float,float,float,float,float] = ( -0.01, 3.41, 0.0, 0.0, 0.0, 0.0, 1.0)
+SPAWN:  tuple[float,float,float,float,float,float,float] = ( -0.01, 0.124, 0.0, 0.0, 0.0, 0.0, 1.0)
 
 class State:
     # Pose is x, y, z, rot_x, rot_y, rot_z, rot_w
@@ -86,7 +86,7 @@ class GoalNode(Node):
         self.get_logger().info("GoalStatusArray Updated")
         if msg.status_list and msg.status_list[-1].status == 4:
             self.get_logger().info("point reached")
-            self.updateState
+            self.updateState()
 
     def updateState(self):
         if self.health >= self.highHealthTrigger:
@@ -95,7 +95,7 @@ class GoalNode(Node):
                 self.cur_state = 2
             else: 
                 self.state = self.highHealthState1
-                self.cut_state = 1
+                self.cur_state = 1
             self.get_logger().info(f"Changing state to {self.state}")
             self.send_goal()
         
